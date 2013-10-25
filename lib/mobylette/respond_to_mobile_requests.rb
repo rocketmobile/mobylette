@@ -37,11 +37,12 @@ module Mobylette
 
       cattr_accessor :mobylette_options
       @@mobylette_options = Hash.new
-      @@mobylette_options[:skip_xhr_requests]  = true
-      @@mobylette_options[:fallback_chains]    = { mobile: [:mobile, :html] }
-      @@mobylette_options[:mobile_user_agents] = Mobylette::MobileUserAgents.new
-      @@mobylette_options[:devices]            = Hash.new
-      @@mobylette_options[:skip_user_agents]   = []
+      @@mobylette_options[:skip_xhr_requests]       = true
+      @@mobylette_options[:fallback_chains]         = { mobile: [:mobile, :html] }
+      @@mobylette_options[:mobile_user_agents]      = Mobylette::MobileUserAgents.new
+      @@mobylette_options[:devices]                 = Hash.new
+      @@mobylette_options[:skip_user_agents]        = []
+      @@mobylette_options[:skip_user_agents_regexp] = nil
 
       cattr_accessor :mobylette_resolver
       self.mobylette_resolver = Mobylette::Resolvers::ChainedFallbackResolver.new({}, self.view_paths)
@@ -76,7 +77,8 @@ module Mobylette
       #     By default :iphone, :ipad, :ios and :android are already registered.
       # * skip_user_agents: [:ipad, :android]
       #     Don't consider these user agents mobile devices.
-      #
+      # * skip_user_agents_regexp: /iPad|iPad.*Mobile/
+      #     Don't consider user agents matching this regexp mobile devices.
       # Example Usage:
       #
       #   class ApplicationController...
@@ -160,7 +162,7 @@ module Mobylette
     # Private: Rertuns true if the current user agent should be skipped by configuration
     #
     def user_agent_excluded?
-      request.user_agent.to_s.downcase =~ Regexp.union([self.mobylette_options[:skip_user_agents]].flatten.map{|agent| agent.is_a?(Symbol) ? agent.to_s : agent })
+      request.user_agent.to_s.downcase =~ (self.mobylette_options[:skip_user_agents_regexp] || Regexp.union([self.mobylette_options[:skip_user_agents]].flatten.map(&:to_s)))
     end
 
     # Private: Returns true if the visitor has the force_mobile set in it's session
